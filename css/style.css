@@ -100,8 +100,8 @@ body{
 .toast{
   position: fixed;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 24px;              /* always near bottom */
+  transform: translateX(-50%);
   opacity: 0;
   pointer-events: none;
   z-index: 9999;
