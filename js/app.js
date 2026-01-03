@@ -15,11 +15,11 @@ const MENUS = [
 // Demo cart state
 const cart = [];
 
-// ---------------- Toast + swipe-to-dismiss (no animation restarts) ----------------
-let toastStartHideTimer = null; // triggers hide after 4s
-let toastCleanupTimer = null;   // cleanup after 6s
-let toastHideAt = 0;            // timestamp when hide should start
-let toastEndAt = 0;             // timestamp when toast fully ends
+// ---------------- Toast + swipe-to-dismiss (freeze state while dragging) ----------------
+let toastStartHideTimer = null;
+let toastCleanupTimer = null;
+let toastHideAt = 0;
+let toastEndAt = 0;
 
 function clearToastTimers() {
   clearTimeout(toastStartHideTimer);
@@ -42,23 +42,20 @@ function showAddedToCartToast(itemName) {
   if (!toast) return;
 
   initToastSwipeOnce();
-
   clearToastTimers();
 
-  // reset classes + inline styles (in case user dragged)
-  toast.classList.remove("hiding", "dragging", "fast", "visible");
-  toast.style.transform = "";
+  // hard reset (important after drag)
+  toast.classList.remove("dragging", "fast", "hiding");
   toast.style.opacity = "";
+  toast.style.removeProperty("--toastY");
 
   toast.textContent = `${itemName} added to the cart`;
 
-  // force reflow so transition always triggers
+  // restart visibility transition reliably
+  toast.classList.remove("visible");
   void toast.offsetWidth;
-
-  // show
   toast.classList.add("visible");
 
-  // start hide at t=4s; end at t=6s
   scheduleToastTimers(4000, 6000);
 }
 
@@ -72,6 +69,9 @@ function startHideToast(fast = false) {
   toast.classList.add("hiding");
   toast.classList.remove("visible");
 
+  toast.style.opacity = "";
+  toast.style.removeProperty("--toastY");
+
   if (fast) {
     clearToastTimers();
     toastCleanupTimer = setTimeout(() => cleanupToast(), 300);
@@ -83,8 +83,8 @@ function cleanupToast() {
   if (!toast) return;
 
   toast.classList.remove("visible", "hiding", "dragging", "fast");
-  toast.style.transform = "";
   toast.style.opacity = "";
+  toast.style.removeProperty("--toastY");
   clearToastTimers();
 }
 
@@ -101,13 +101,15 @@ function initToastSwipeOnce() {
   let deltaY = 0;
   let dragging = false;
 
+  let baseY = 0; // frozen Y at drag start
   let remainingStartHide = 0;
   let remainingCleanup = 0;
 
   const threshold = 55;
 
   toast.addEventListener("pointerdown", (e) => {
-    if (!toast.classList.contains("visible")) return;
+    // allow dragging only if it's currently visible (even if mid-transition)
+    if (!toast.classList.contains("visible") && !toast.classList.contains("hiding")) return;
 
     dragging = true;
     startY = e.clientY;
@@ -119,8 +121,18 @@ function initToastSwipeOnce() {
     remainingCleanup   = Math.max(0, toastEndAt - now);
     clearToastTimers();
 
-    toast.classList.add("dragging");
-    toast.classList.remove("fast");
+    // FREEZE current visual state to prevent snapping
+    const cs = getComputedStyle(toast);
+    const yStr = cs.getPropertyValue("--toastY").trim() || "0px";
+    baseY = parseFloat(yStr) || 0;
+
+    toast.style.setProperty("--toastY", `${baseY}px`);
+    toast.style.opacity = cs.opacity;
+
+    // remove state classes that would fight the drag, then enable dragging
+    toast.classList.remove("fast", "hiding");
+    toast.classList.add("visible", "dragging");
+
     toast.setPointerCapture(e.pointerId);
   });
 
@@ -128,9 +140,12 @@ function initToastSwipeOnce() {
     if (!dragging) return;
 
     deltaY = Math.max(0, e.clientY - startY);
-    toast.style.transform = `translateX(-50%) translateY(${deltaY}px)`;
+    const y = baseY + deltaY;
 
-    const alpha = Math.max(0, 1 - deltaY / 180);
+    toast.style.setProperty("--toastY", `${y}px`);
+
+    // fade slightly while dragging down
+    const alpha = Math.max(0, 1 - y / 180);
     toast.style.opacity = String(alpha);
   });
 
@@ -138,19 +153,18 @@ function initToastSwipeOnce() {
     if (!dragging) return;
     dragging = false;
 
-    if (deltaY > threshold) {
-      toast.style.transform = "";
-      toast.style.opacity = "";
-      toast.classList.remove("dragging");
+    toast.classList.remove("dragging");
+    toast.style.opacity = "";
+
+    if (baseY + deltaY > threshold) {
+      // dismiss fast
+      toast.style.removeProperty("--toastY");
       startHideToast(true);
       return;
     }
 
-    // snap back + resume timers
-    toast.classList.remove("dragging");
-    toast.style.transform = "";
-    toast.style.opacity = "";
-
+    // snap back to visible smoothly (no restart)
+    toast.style.removeProperty("--toastY");
     toast.classList.add("visible");
     toast.classList.remove("hiding", "fast");
 
@@ -159,8 +173,7 @@ function initToastSwipeOnce() {
 
   toast.addEventListener("pointerup", endDrag);
   toast.addEventListener("pointercancel", endDrag);
-} // ✅ THIS CLOSING BRACE WAS MISSING IN YOUR VERSION
-
+}
 // ---------------- Cart ----------------
 function addToCart(item) {
   cart.push(item);
