@@ -13,9 +13,7 @@ const MENUS = [
   { key: "soft",    label: "Soft drink", items: soft },
 ];
 
-let activeMenuKey = MENUS[0].key;
-
-// Demo cart state (you can replace later with real UI)
+// Demo cart state
 const cart = [];
 
 // ----- Toast -----
@@ -26,7 +24,7 @@ function showAddedToCartToast(itemName) {
   if (!toast) return;
 
   toast.classList.remove("show");
-  void toast.offsetWidth; // restart animation reliably
+  void toast.offsetWidth;
 
   toast.textContent = `${itemName} added to the cart`;
   toast.classList.add("show");
@@ -42,58 +40,56 @@ function addToCart(item) {
   if (cartCount) cartCount.textContent = String(cart.length);
 }
 
-// ----- UI rendering -----
-function renderTabs() {
-  const tabs = document.getElementById("menuTabs");
-  if (!tabs) return;
+// ----- Rendering: all menus one below the other -----
+function renderAllMenus() {
+  const root = document.getElementById("menuSections");
+  if (!root) return;
 
-  tabs.innerHTML = "";
+  root.innerHTML = "";
 
-  MENUS.forEach((m) => {
-    const btn = document.createElement("button");
-    btn.textContent = m.label;
-    btn.className = (m.key === activeMenuKey) ? "active" : "";
+  MENUS.forEach((menu) => {
+    const section = document.createElement("section");
+    section.className = "menu-section";
+    section.id = `section-${menu.key}`;
 
-    btn.onclick = () => {
-      activeMenuKey = m.key;
-      renderTabs();
-      renderMenu();
-    };
+    const title = document.createElement("h2");
+    title.className = "menu-section-title";
+    title.textContent = menu.label;
 
-    tabs.appendChild(btn);
-  });
-}
+    const sub = document.createElement("p");
+    sub.className = "menu-section-sub";
+    sub.textContent = `${menu.items.length} item(s)`;
 
-function renderMenu() {
-  const grid = document.getElementById("menuGrid");
-  if (!grid) return;
+    const grid = document.createElement("div");
+    grid.className = "menu-grid";
 
-  const menu = MENUS.find((m) => m.key === activeMenuKey);
-  if (!menu) return;
+    menu.items.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "card";
 
-  grid.innerHTML = "";
+      const ingredientsText =
+        item.ingredients && item.ingredients.length
+          ? item.ingredients.join(", ")
+          : "Ingredients: (coming soon)";
 
-  menu.items.forEach((item) => {
-    const card = document.createElement("div");
-    card.className = "card";
+      card.innerHTML = `
+        <div class="card-title">${escapeHtml(item.name)}</div>
+        <div class="card-sub">${escapeHtml(ingredientsText)}</div>
+        <button class="add-btn" type="button">Add</button>
+      `;
 
-    const ingredientsText =
-      item.ingredients && item.ingredients.length
-        ? item.ingredients.join(", ")
-        : "Ingredients: (coming soon)";
+      card.querySelector(".add-btn").onclick = () => {
+        addToCart(item);
+        showAddedToCartToast(item.name);
+      };
 
-    card.innerHTML = `
-      <div class="card-title">${escapeHtml(item.name)}</div>
-      <div class="card-sub">${escapeHtml(ingredientsText)}</div>
-      <button class="add-btn" type="button">Add</button>
-    `;
+      grid.appendChild(card);
+    });
 
-    card.querySelector(".add-btn").onclick = () => {
-      addToCart(item);
-      showAddedToCartToast(item.name);
-    };
-
-    grid.appendChild(card);
+    section.appendChild(title);
+    section.appendChild(sub);
+    section.appendChild(grid);
+    root.appendChild(section);
   });
 }
 
@@ -108,5 +104,4 @@ function escapeHtml(str) {
 }
 
 // Init
-renderTabs();
-renderMenu();
+renderAllMenus();
