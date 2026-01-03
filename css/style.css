@@ -105,12 +105,17 @@ body{
    center fade-in 2s -> stay at bottom 2s -> fade-out 2s */
 /* Toast base */
 /* Toast base (bottom) */
+/* Toast base (bottom) */
 .toast{
   position: fixed;
   left: 50%;
   bottom: 24px;
-  transform: translateX(-50%) translateY(24px); /* starts lower */
+
+  /* Use a CSS variable for Y so we can freeze it while dragging */
+  --toastY: 24px;
+  transform: translateX(-50%) translateY(var(--toastY));
   opacity: 0;
+
   pointer-events: none;
   z-index: 9999;
 
@@ -126,30 +131,25 @@ body{
   will-change: transform, opacity;
   touch-action: pan-y;
 
-  /* 2s in / 2s out handled via transitions */
   transition: transform 2s ease, opacity 2s ease;
 }
 
-/* Visible state */
 .toast.visible{
   opacity: 1;
-  transform: translateX(-50%) translateY(0px);
+  --toastY: 0px;
   pointer-events: auto;
 }
 
-/* Hiding state (moves down + fades) */
 .toast.hiding{
   opacity: 0;
-  transform: translateX(-50%) translateY(24px);
+  --toastY: 24px;
   pointer-events: none;
 }
 
-/* While dragging, disable transitions so it tracks your finger */
 .toast.dragging{
   transition: none;
 }
 
-/* Fast dismiss when swiped down */
 .toast.fast{
   transition-duration: 0.25s;
 }
