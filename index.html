@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Barman — Order Drinks</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-fallback">B</div>
+      <div>
+        <h1>Barman</h1>
+        <p class="subtitle">Order drinks — pickup at the bar</p>
+      </div>
+    </div>
+
+    <button id="viewCartBtn" class="btn secondary">
+      Cart (<span id="cartCount">0</span>)
+    </button>
+  </header>
+
+  <main class="container">
+    <section class="controls">
+      <input id="searchInput" class="input" type="search" placeholder="Search drinks..." />
+      <select id="categorySelect" class="input">
+        <option value="all">All categories</option>
+      </select>
+    </section>
+
+    <section>
+      <h2 class="section-title">Menu</h2>
+      <div id="menuGrid" class="grid"></div>
+    </section>
+  </main>
+
+  <div id="cartModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Your cart</h3>
+        <button id="closeCartBtn" class="btn secondary">Close</button>
+      </div>
+
+      <div id="cartItems" class="cart-items"></div>
+
+      <div class="cart-footer">
+        <div class="total">Total: ₪<span id="cartTotal">0</span></div>
+        <button id="checkoutBtn" class="btn primary" disabled>Checkout (placeholder)</button>
+      </div>
+
+      <p class="hint">UI demo only — payments/back-end not connected.</p>
+    </div>
+  </div>
+
+  <script src="./js/app.js" defer></script>
+</body>
+</html>
