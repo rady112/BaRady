@@ -3,5 +3,5 @@ export default [
   { id: "sf2", name: "Sprite" },
   { id: "sf3", name: "Cola - Zero" },
   { id: "sf4", name: "Sprite - Zero" },
-  { id: "sf5", name: "Water" }
+  { id: "sf5", name: "Water" },
 ];
